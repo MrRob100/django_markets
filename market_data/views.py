@@ -1,5 +1,7 @@
 from django.http import HttpResponse
 from django.shortcuts import render
+import datetime
+from datetime import date
 import requests
 import json
 import os
@@ -13,18 +15,16 @@ def stock_candles(request, symbol):
         'APCA-API-SECRET-KEY': os.environ.get('ALPACA_SECRET')
     }
 
-    r = requests.get('https://data.alpaca.markets/v2/stocks/' + symbol + '/bars', headers=headers)
-    print(os.environ.get('ALPACA_KEY'))
+    start = (datetime.datetime.today() - datetime.timedelta(days=200)).date()
+    end = (datetime.datetime.today() - datetime.timedelta(days=1)).date()
+    r = requests.get('https://data.alpaca.markets/v2/stocks/' + symbol + '/bars?timeframe=1Day&start=' + str(start) + '&end=' + str(end), headers=headers)
 
-#     return HttpResponse(json.dumps(r))
     return HttpResponse("You're looking at symbol %s." % r.status_code)
 
 def crypto_candles(request, symbol):
 
+    return HttpResponse("You're looking at symbol %s." % symbol)
 
-
-    return HttpResponse("You're looking at symbol " + symbol)
-#     return HttpResponse("You're looking at symbol %s." % symbol)
 
 def forex_candles(request, symbol):
 
