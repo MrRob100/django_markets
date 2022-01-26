@@ -15,7 +15,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from market_data import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('stocks/<str:symbol>', views.stock_candles, name='stock_candles')
 ]
