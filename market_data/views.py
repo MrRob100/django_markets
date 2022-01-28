@@ -4,8 +4,9 @@ import datetime
 import time
 import requests
 import os
+import json
+from .models import Candle
 
-# Create your views here.
 
 def stock_candles(request, symbol):
     headers = {
@@ -20,9 +21,20 @@ def stock_candles(request, symbol):
     return HttpResponse(r.text)
 
 def crypto_candles(request, symbol):
-    r = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol.upper() + 'USDT&interval=1d')
 
-    return HttpResponse(r.text)
+    #add date condition
+    record = Candle.objects.filter(asset_class='crypto', symbol=symbol)
+    print(record.exists())
+
+    if record.exists():
+        response = record.data
+    else:
+        r = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol.upper() + 'USDT&interval=1d')
+        response = r.text
+        Candle.objects.create(symbol=symbol, asset_class='crypto', data=json.dumps(response))
+
+
+    return HttpResponse(response)
 
 def forex_candles(request, pair):
     end = int(time.time())
