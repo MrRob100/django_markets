@@ -19,7 +19,7 @@ from market_data import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('stocks/<str:symbol>', views.stock_candles, name='stock_candles'),
-    path('cryptos/<str:symbol>', views.crypto_candles, name='crypto_candles'),
+    path('stock/<str:symbol>', views.stock_candles, name='stock_candles'),
+    path('crypto/<str:symbol>', views.crypto_candles, name='crypto_candles'),
     path('forex/<str:symbol>', views.forex_candles, name='forex_candles'),
 ]
