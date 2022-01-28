@@ -8,5 +8,5 @@ class Candle(models.Model):
     data = models.JSONField()
     date_added = models.DateTimeField(auto_now=True)
 
-    def __str_(self):
+    def __str__(self):
         return self.symbol
