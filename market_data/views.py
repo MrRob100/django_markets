@@ -1,9 +1,8 @@
 from django.http import HttpResponse
 from django.shortcuts import render
 import datetime
-from datetime import date
+import time
 import requests
-import json
 import os
 
 # Create your views here.
@@ -25,9 +24,11 @@ def crypto_candles(request, symbol):
 
     return HttpResponse(r.text)
 
-def forex_candles(request, symbol):
+def forex_candles(request, pair):
+    end = int(time.time())
+    start = end - 331556952
+    token = os.environ.get('FINNHUB_KEY')
+    formatted = pair[:3] + '-' + pair[3:]
+    r = requests.get('https://finnhub.io/api/v1/forex/candle?symbol=OANDA:' + formatted.upper() + '&resolution=D&from' + str(start) + '&to=' + str(end) + '&token=' + token)
 
-
-
-    return HttpResponse("You're looking at symbol " + symbol)
-#     return HttpResponse("You're looking at symbol %s." % symbol)
+    return HttpResponse(r.text)

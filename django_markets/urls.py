@@ -21,5 +21,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('stock/<str:symbol>', views.stock_candles, name='stock_candles'),
     path('crypto/<str:symbol>', views.crypto_candles, name='crypto_candles'),
-    path('forex/<str:symbol>', views.forex_candles, name='forex_candles'),
+    path('forex/<str:pair>', views.forex_candles, name='forex_candles'),
 ]
