@@ -1,6 +1,5 @@
 from django.db import models
 from jsonfield import JSONField
-from datetime import datetime
 
 class Candle(models.Model):
     symbol = models.CharField(max_length=10)
