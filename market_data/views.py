@@ -34,42 +34,31 @@ def stock_candles(request, symbol):
 
 def crypto_candles(request, symbol):
     time_threshold = datetime.now() - timedelta(hours=5)
-    record = Candle.objects.filter(asset_class='crypto', symbol=symbol.upper(), date_added__gt=time_threshold)
+    record = Candle.objects.filter(
+        asset_class='crypto', symbol=symbol, date_added__gt=time_threshold)
 
     if record.exists():
-        response = record.latest('data').data
+        candles = record.latest('data').data
     else:
-        r = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol.upper() + 'USDT&interval=1d')
+        Candle.objects.filter(asset_class='crypto', symbol=symbol).delete()
+        r = requests.get('https://www.binance.com/api/v3/klines?symbol=' +
+                         symbol.upper() + 'USDT&interval=1d')
         if r.status_code == 200:
-            Candle.objects.filter(asset_class='crypto', symbol=symbol.upper()).delete()
             response = r.text
+            list = json.loads(response)
 
-            Candle.objects.create(symbol=symbol.upper(), asset_class='crypto', data=response)
+            data = []
+            for item in list:
+                data.append([item[0], float(item[1]), float(
+                    item[2]), float(item[3]), float(item[4])])
+
+            candles = json.dumps(data)
+            Candle.objects.create(symbol=symbol.upper(),
+                                  asset_class='crypto', data=candles)
         else:
             return HttpResponse(status=r.status_code)
 
-    r2 = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol.upper() + 'USDT&interval=1d')
-
-    list = json.loads(r2.text)
-
-    print("type \/")
-    print(type(list))
-    # fmt = [float(item) for item in list[0]]
-    
-    data = []
-    for item in list:
-        print(item)
-        # data.append([item[0]])
-        # data.append([float(item[1])])
-        # data.append([float(item[2])])
-        # data.append([float(item[3])])
-        # data.append([float(item[4])])
-
-        data.append([item[0], float(item[1]), float(item[2]), float(item[3]), float(item[4])])
-        # data.append([item[0], float(item[1]), float(item[2]), float(item[3]), float(item[4])])
-
-    # return HttpResponse(fmt)
-    return HttpResponse(json.dumps(data))
+    return HttpResponse(candles)
 
 def forex_candles(request, pair):
     time_threshold = datetime.now() - timedelta(hours=5)
