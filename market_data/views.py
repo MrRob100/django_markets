@@ -83,7 +83,7 @@ def crypto_candles(request, symbol):
 def forex_candles(request, pair):
     time_threshold = datetime.now() - timedelta(hours=5)
     record = Candle.objects.filter(
-        asset_class='forexFFFF', symbol=pair, date_added__gt=time_threshold)
+        asset_class='forex', symbol=pair, date_added__gt=time_threshold)
 
     if record.exists():
         response = record.latest('data').data
@@ -96,10 +96,8 @@ def forex_candles(request, pair):
             list2 = json.loads(r2.text)    
             if len(list1) < len(list2):
                 shortest = list1
-                longest = list2
             else:
                 shortest = list2
-                longest = list1
 
             i = 0
             combined = []
@@ -107,16 +105,16 @@ def forex_candles(request, pair):
                 combined.append(
                     [
                         item[0], 
-                        float(item[1]) / float(longest[i][1]), 
-                        float(item[2]) / float(longest[i][2]),
-                        float(item[3]) / float(longest[i][3]),
-                        float(item[4]) / float(longest[i][4])
+                        float(list1[i][1]) / float(list2[i][1]), 
+                        float(list1[i][2]) / float(list2[i][2]),
+                        float(list1[i][3]) / float(list2[i][3]),
+                        float(list1[i][4]) / float(list2[i][4])
                     ]
                 )
                 i = i+1
 
             Candle.objects.filter(asset_class='forex', symbol=pair.upper()).delete()
-            response = combined
+            response = json.dumps(combined)
             Candle.objects.create(symbol=pair.upper(), asset_class='forex', data=combined)
         else:
             return HttpResponse(status=r.status_code)
