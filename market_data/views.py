@@ -82,7 +82,7 @@ def forex_candles(request, pair):
 
 def crypto_pairs(request, pair):
     time_threshold = datetime.now() - timedelta(hours=1)
-    record = Candle.objects.filter(asset_class='crypto_pair', symbol=pair, date_added__gt=time_threshold)
+    record = Candle.objects.filter(asset_class='crypto_pairTTTT', symbol=pair, date_added__gt=time_threshold)
 
     if record.exists():
         response = record.latest('data').data
@@ -91,16 +91,26 @@ def crypto_pairs(request, pair):
         symbol2 = pair[3:].upper()
 
         pair_ticker = crypto_symbols()
-        return HttpResponse(pair_ticker)
+
+        if symbol1 + symbol2 in pair_ticker:
+            both = symbol1 + symbol2
+            oneover = False
+        elif symbol2 + symbol1 in pair_ticker:
+            both = symbol2 + symbol1
+            oneover = True
+        else:
+            return HttpResponse('invalid symbol', status=500)
 
         #determine ordering of symbols
         r = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol1 + 'USDT&interval=1d')
         r2 = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol2 + 'USDT&interval=1d')
-        rx = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol1 + symbol2 + '&interval=1d')
+        rx = requests.get('https://www.binance.com/api/v3/klines?symbol=' + both + '&interval=1d')
 
         if r.status_code == 200 and r2.status_code == 200 and rx.status_code == 200:
             list1 = json.loads(r.text)
-            list2 = json.loads(r2.text)    
+            list2 = json.loads(r2.text)  
+            listx = json.loads(rx.text)
+
             if len(list1) < len(list2):
                 shortest = list1
             else:
@@ -116,6 +126,40 @@ def crypto_pairs(request, pair):
                         float(list1[i][2]) / float(list2[i][2]),
                         float(list1[i][3]) / float(list2[i][3]),
                         float(list1[i][4]) / float(list2[i][4])
+                    ]
+                )
+                i = i+1
+
+            
+            if len(combined1) < len(listx):
+                shortest = combined1
+            else:
+                shortest = listx
+
+            i = 0
+            combinedx = []
+            for item in shortest:
+
+                # print(float(combined1[i][1]) + ' ' + float(listx[i][1]))
+
+                if oneover:
+                    x1 = 1 / float(listx[i][1])
+                    x2 = 1 / float(listx[i][2])
+                    x3 = 1 / float(listx[i][3])
+                    x4 = 1 / float(listx[i][4])
+                else:
+                    x1 = float(listx[i][1])
+                    x2 = float(listx[i][2])
+                    x3 = float(listx[i][3])
+                    x4 = float(listx[i][4])
+
+                combinedx.append(
+                    [
+                        item[0],
+                        float(combined1[i][1]) / x1,
+                        float(combined1[i][2]) / x2,
+                        float(combined1[i][3]) / x3,
+                        float(combined1[i][4]) / x4
                     ]
                 )
                 i = i+1
