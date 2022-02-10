@@ -3,10 +3,10 @@ from django.shortcuts import render
 from datetime import datetime, timedelta
 import time
 import json
-from grpc import StatusCode
 import requests
 import os
 from .models import Candle
+from .methods import crypto_symbols
 
 
 def stock_candles(request, symbol):
@@ -58,40 +58,47 @@ def crypto_candles(request, symbol):
 
     return HttpResponse(candles)
 
-# def forex_candles(request, pair):
-#     time_threshold = datetime.now() - timedelta(hours=5)
-#     record = Candle.objects.filter(asset_class='forex', symbol=pair, date_added__gt=time_threshold)
-
-#     if record.exists():
-#         response = record.latest('data').data
-#     else:
-#         end = int(time.time())
-#         start = end - 331556952
-#         token = os.environ.get('FINNHUB_KEY')
-#         formatted = pair[:3] + '-' + pair[3:]
-#         r = requests.get('https://finnhub.io/api/v1/forex/candle?symbol=OANDA:' + formatted.upper() + '&resolution=D&from' + str(start) + '&to=' + str(end) + '&token=' + token)
-#         if r.status_code == 200:
-#             Candle.objects.filter(asset_class='forex', symbol=pair.upper()).delete()
-#             response = r.text
-#             Candle.objects.create(symbol=pair.upper(), asset_class='forex', data=response)
-#         else:
-#             return HttpResponse(status=r.status_code)
-
-#     return HttpResponse(response)
-
-
 def forex_candles(request, pair):
     time_threshold = datetime.now() - timedelta(hours=5)
-    record = Candle.objects.filter(
-        asset_class='forex', symbol=pair, date_added__gt=time_threshold)
+    record = Candle.objects.filter(asset_class='forex', symbol=pair, date_added__gt=time_threshold)
 
     if record.exists():
         response = record.latest('data').data
     else:
-        r = requests.get('https://www.binance.com/api/v3/klines?symbol=' + pair[:3].upper() + 'USDT&interval=1d')
-        r2 = requests.get('https://www.binance.com/api/v3/klines?symbol=' + pair[3:].upper() + 'USDT&interval=1d')
+        end = int(time.time())
+        start = end - 331556952
+        token = os.environ.get('FINNHUB_KEY')
+        formatted = pair[:3] + '-' + pair[3:]
+        r = requests.get('https://finnhub.io/api/v1/forex/candle?symbol=OANDA:' + formatted.upper() + '&resolution=D&from' + str(start) + '&to=' + str(end) + '&token=' + token)
+        if r.status_code == 200:
+            Candle.objects.filter(asset_class='forex', symbol=pair.upper()).delete()
+            response = r.text
+            Candle.objects.create(symbol=pair.upper(), asset_class='forex', data=response)
+        else:
+            return HttpResponse(status=r.status_code)
 
-        if r.status_code == 200 and r2.status_code == 200:
+    return HttpResponse(response)
+
+
+def crypto_pairs(request, pair):
+    time_threshold = datetime.now() - timedelta(hours=1)
+    record = Candle.objects.filter(asset_class='crypto_pair', symbol=pair, date_added__gt=time_threshold)
+
+    if record.exists():
+        response = record.latest('data').data
+    else:
+        symbol1 = pair[:3].upper()
+        symbol2 = pair[3:].upper()
+
+        pair_ticker = crypto_symbols()
+        return HttpResponse(pair_ticker)
+
+        #determine ordering of symbols
+        r = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol1 + 'USDT&interval=1d')
+        r2 = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol2 + 'USDT&interval=1d')
+        rx = requests.get('https://www.binance.com/api/v3/klines?symbol=' + symbol1 + symbol2 + '&interval=1d')
+
+        if r.status_code == 200 and r2.status_code == 200 and rx.status_code == 200:
             list1 = json.loads(r.text)
             list2 = json.loads(r2.text)    
             if len(list1) < len(list2):
@@ -100,9 +107,9 @@ def forex_candles(request, pair):
                 shortest = list2
 
             i = 0
-            combined = []
+            combined1 = []
             for item in shortest:
-                combined.append(
+                combined1.append(
                     [
                         item[0], 
                         float(list1[i][1]) / float(list2[i][1]), 
@@ -113,9 +120,9 @@ def forex_candles(request, pair):
                 )
                 i = i+1
 
-            Candle.objects.filter(asset_class='forex', symbol=pair.upper()).delete()
-            response = json.dumps(combined)
-            Candle.objects.create(symbol=pair.upper(), asset_class='forex', data=combined)
+            Candle.objects.filter(asset_class='crypto_pair', symbol=pair.upper()).delete()
+            response = json.dumps(combinedx)
+            Candle.objects.create(symbol=pair.upper(), asset_class='crypto_pair', data=combinedx)
         else:
             return HttpResponse(status=r.status_code)
 

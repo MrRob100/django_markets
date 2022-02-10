@@ -22,4 +22,5 @@ urlpatterns = [
     path('stock/<str:symbol>', views.stock_candles, name='stock_candles'),
     path('crypto/<str:symbol>', views.crypto_candles, name='crypto_candles'),
     path('forex/<str:pair>', views.forex_candles, name='forex_candles'),
+    path('cryptopairs/<str:pair>', views.crypto_pairs, name='crypto_pair_candles')
 ]
